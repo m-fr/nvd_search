@@ -3,14 +3,22 @@ import json
 import click
 import re
 
+from rich import box
+from rich.table import Table
+
+from nvd_search.cli.console import Console
+
 
 def print_cve_details(vulnerabilities):
-    for vuln in vulnerabilities:
+    table = Table("#", "ID", "Description", "Link", title="CVEs", box=box.HORIZONTALS, show_lines=True)
+
+    for idx, vuln in enumerate(vulnerabilities):
         cve_id = vuln['cve']['id']
         description = vuln['cve']['descriptions'][0]['value']
-        print(f"{cve_id}: {description}")
         cve_link = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
-        click.echo(click.style(cve_link, fg='blue', underline=True))
+        table.add_row(str(idx), cve_id, description.strip(), cve_link)
+
+    Console().print(table, justify="center")
 
 def search_by_keyword(keyword):
     base_url =f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={keyword}"
