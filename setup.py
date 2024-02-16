@@ -24,6 +24,7 @@ requires = [
     "requests",
     "pydantic>=2.6",
     "rich",
+    "semver",
 ]
 
 about: dict[str, str] = {}

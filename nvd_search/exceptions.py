@@ -4,3 +4,7 @@ class UtilException(Exception):
 
 class UtilRuntimeError(UtilException):
     """Runtime error."""
+
+
+class UtilTypeError(UtilException):
+    """Type error."""
