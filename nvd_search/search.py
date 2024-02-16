@@ -2,12 +2,7 @@ import requests
 import json
 import click
 import re
-#author:arunkumarv
-#https://www.linkedin.com/in/arunkumarvenugopal/
-click.echo(click.style('*' * 120, fg='cyan'))
-click.echo(click.style('                                                 CVE Finder                                       ', fg='red', bold=True))
-click.echo(click.style('search tool to use the NIST NVD ( National Vulnerability Database ) to fetch CVEs associated with a product @arun kumar v', fg='green'))
-click.echo(click.style('*' * 120, fg='cyan'))
+
 
 def print_cve_details(vulnerabilities):
     for vuln in vulnerabilities:
@@ -198,4 +193,3 @@ def search():
         else:
             print("Invalid option. Please try again.")
                   
-search()

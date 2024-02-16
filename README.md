@@ -1,26 +1,22 @@
-# CVE-Finder
-This is a command-line tool to search the National Vulnerability Database (NVD) to fetch CVEs (Common Vulnerabilities and Exposures) associated with a product.
+# NVD Search
 
-Demo : https://drive.google.com/file/d/11iI0akhqVPi-OeBHwebzkxP8Infbcxg4/view?usp=sharing
+This is a command-line tool to search the National Vulnerability Database (NVD) to fetch Common Vulnerabilities and Exposures (CVEs) associated with a product.
 
-REQUIREMENTS :
+The tool is based on [neondragonwarrior/CVE-Finder](https://github.com/neondragonwarrior/CVE-Finder).
 
-pip install click
-pip install requests
+## Get Started
 
-HOW TO RUN 
+```shell
+git clone https://github.com:m-fr/nvd_search
+cd nvd_search
+pip install .
+nvd_search
+```
 
-$ python3 CVELooup.py
+## Functionality
 
-$
-************************************************************************************************************************
-                                                 CVE Finder                                       
-search tool to use the NIST NVD ( National Vulnerability Database ) to fetch CVEs associated with a product @arun kumar v
-************************************************************************************************************************
-Select the option:
 1. General keyword search
-2. Search using product name when CPE info is not known
-3. Search for CVEs of against specific CPE - type, vendor name, product, and version
+2. Search using product name when Common Platform Enumeration (CPE) info is not known
+3. Search for CVEs of specific CPE - type, vendor name, product, and version
 4. Search info for a CVE-ID
-5. Search for all CVEs affiliated with versions x.x through x.x of a specific CPE
-6. HELP
+5. Search for all CVEs affiliated with versions `x.x` through `x.x` of a specific CPE
