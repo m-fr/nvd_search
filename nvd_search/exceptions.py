@@ -8,3 +8,7 @@ class UtilRuntimeError(UtilException):
 
 class UtilTypeError(UtilException):
     """Type error."""
+
+
+class UtilValueError(UtilException):
+    """Value error."""

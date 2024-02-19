@@ -5,18 +5,23 @@ import re
 
 from rich import box
 from rich.table import Table
+from rich.markup import escape
+from rich.pretty import pprint
 
 from nvd_search.cli.console import Console
+from nvd_search.enums import Risk
+from nvd_search.metrics import severity
 
 
 def print_cve_details(vulnerabilities):
     table = Table("#", "ID", "Description", "Link", title="CVEs", box=box.HORIZONTALS, show_lines=True)
 
     for idx, vuln in enumerate(vulnerabilities):
-        cve_id = vuln['cve']['id']
-        description = vuln['cve']['descriptions'][0]['value']
-        cve_link = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
-        table.add_row(str(idx), cve_id, description.strip(), cve_link)
+        cve_id = escape(vuln['cve']['id'])
+        description = escape(vuln['cve']['descriptions'][0]['value'])
+        cve_link = escape(f"https://nvd.nist.gov/vuln/detail/{cve_id}")
+        risk = severity(vuln['cve']['metrics']).to_color()
+        table.add_row(str(idx), f"{risk}{cve_id}", description.strip(), f"[link={cve_link}]{cve_link}[/]")
 
     Console().print(table, justify="center")
 
