@@ -1,32 +1,33 @@
 import requests
-import json
 import click
 import re
 
-from rich import box
-from rich.table import Table
+from rich import box, print
 from rich.markup import escape
-from rich.pretty import pprint
+from rich.table import Table
+from rich.prompt import Prompt, IntPrompt, Confirm
+
+from semver import Version
 
 from nvd_search.cli.console import Console
-from nvd_search.enums import Risk
 from nvd_search.metrics import severity
 
 
 def print_cve_details(vulnerabilities):
-    table = Table("#", "ID", "Description", "Link", title="CVEs", box=box.HORIZONTALS, show_lines=True)
+    table = Table("ID", "Description", "Link", title="CVEs", box=box.HORIZONTALS, show_lines=True)
 
-    for idx, vuln in enumerate(vulnerabilities):
+    for vuln in vulnerabilities:
         cve_id = escape(vuln['cve']['id'])
         description = escape(vuln['cve']['descriptions'][0]['value'])
         cve_link = escape(f"https://nvd.nist.gov/vuln/detail/{cve_id}")
         risk = severity(vuln['cve']['metrics']).to_color()
-        table.add_row(str(idx), f"{risk}{cve_id}", description.strip(), f"[link={cve_link}]{cve_link}[/]")
+        table.add_row(f"{risk}{cve_id}", description.strip(), f"[link={cve_link}]{cve_link}[/]")
 
     Console().print(table, justify="center")
 
+
 def search_by_keyword(keyword):
-    base_url =f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={keyword}"
+    base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={keyword}"
     response = requests.get(base_url)
     response.raise_for_status()
     data = response.json()
@@ -34,24 +35,26 @@ def search_by_keyword(keyword):
     # Extract the CVE IDs and descriptions
     vulnerabilities = data['vulnerabilities']
     print_cve_details(vulnerabilities)
+    print(f"Total {len(vulnerabilities)} CVEs found for keyword '{escape(keyword)}'.")
     return vulnerabilities
+
 
 def search_by_cpe(cpe_name):
     base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={cpe_name}"
     response = requests.get(base_url)
-    print(base_url)
     response.raise_for_status()
     data = response.json()
 
     # Extract the CVE IDs and descriptions
     vulnerabilities = data['vulnerabilities']
     print_cve_details(vulnerabilities)
+    print(f"Total {len(vulnerabilities)} CVEs found for CPE '{escape(cpe_name)}'.")
     return vulnerabilities
 
 
 def search_by_cve_id(cve_id):
     cve_id = cve_id.upper()
-    base_url =f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve_id}"
+    base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve_id}"
     response = requests.get(base_url)
     response.raise_for_status()
     data = response.json()
@@ -60,116 +63,89 @@ def search_by_cve_id(cve_id):
     vulnerabilities = data['vulnerabilities']
     print_cve_details(vulnerabilities)
     return vulnerabilities
+
 
 def search_by_prod(prod):
-    input_string=prod
+    input_string = prod
     url = f"https://services.nvd.nist.gov/rest/json/cpes/2.0?keywordSearch={input_string}"
     response = requests.get(url)
-    # Check if the API returned a valid response
-    if response.ok:
-        response_json = response.json()
-        if "resultsPerPage" in response_json and "products" in response_json:
-            # Look for all occurrences of the input string in the response
-            cpe_matches = []
-            for product in response_json["products"]:
-                cpe_match = re.search(r'cpe:2\.3:.*?:.*?:'+input_string, product["cpe"]["cpeName"])
-                if cpe_match:
-                    cpe_matches.append(cpe_match.group(0))
-            if cpe_matches:
-                # Print all unique matching CPEs with numbered responses
-                unique_cpes = list(set(cpe_matches))
-                for i, cpe in enumerate(unique_cpes, start=1):
-                    print(f"{i}: {cpe}")
-    
-                # Ask the user to supply the number
-                while True:
-                    selected_num = input("Select the serial number tagged to CPE : ")
-                    if not selected_num.isdigit():
-                        print("Invalid input. Please enter a number.")
-                        continue
-                    selected_num = int(selected_num)
-                    if selected_num < 1 or selected_num > len(unique_cpes):
-                        print(f"Invalid number. Please enter a number between 1 and {len(unique_cpes)}.")
-                        continue
+    response.raise_for_status()
+
+    response_json = response.json()
+    if "resultsPerPage" in response_json and "products" in response_json:
+        # Look for all occurrences of the input string in the response
+        cpe_matches = []
+        for product in response_json["products"]:
+            cpe_match = re.search(r'cpe:2\.3:.*?:.*?:'+input_string, product["cpe"]["cpeName"])
+            if cpe_match:
+                cpe_matches.append(cpe_match.group(0))
+
+        if cpe_matches:
+            # Print all unique matching CPEs with numbered responses
+            table = Table("#", "CPE", title="CPEs", box=box.HORIZONTALS)
+            unique_cpes = list(set(cpe_matches))
+            for i, cpe in enumerate(unique_cpes):
+                table.add_row(str(i), escape(cpe))
+            Console().print(table, justify="center")
+
+            # Ask the user to select the CPE
+            while True:
+                selected_num = IntPrompt.ask("Select the serial number tagged to CPE")
+                if selected_num not in range(len(unique_cpes)):
+                    print(f"[prompt.invalid]Please enter a number between 0 and {len(unique_cpes)}.")
+                    continue
+                if Confirm.ask(f"Selected '{escape(unique_cpes[selected_num])}'?", default=True):
                     break
-    
-                # Print the corresponding CPE
-                selected_cpe = unique_cpes[selected_num - 1]
-                print(f"You have selected CPE: {selected_cpe}")
-                selected_cpe = unique_cpes[selected_num - 1]
-                version = input('Enter the product version:')
-                while not version:
-                    version = input('Now please enter a valid product version:')
-                cpe_s = f"{selected_cpe}:{version}"  
-                print(f"You have selected:{cpe_s}")
-                search_by_cpe(cpe_s)
-            else:
-                print(f"'{input_string}' not found in any CPEs")
+            selected_cpe = unique_cpes[selected_num]
+
+            # Ask the user to supply the CPE version
+            while True:
+                version = Prompt.ask("Enter the product version")
+                if Version.is_valid(version):
+                    break
+                print("[prompt.invalid]Please enter a valid version.")
+            cpe_s = f"{selected_cpe}:{version}"
+
+            vulnerabilities = search_by_cpe(cpe_s)
+            print(f"Total {len(vulnerabilities)} CVEs found for CPE '{escape(cpe_s)}'.")
         else:
-            print("Invalid response from the NVD API")
+            print(f"[logging.level.info]'{escape(input_string)}' not found in any CPEs")
     else:
-        print(f"Error: {response.status_code} - {response.reason}")
-                
-                
+        print("[logging.level.warning]Invalid response from the NVD API")
+
+
 def search_by_ver(cpe_name, version_start=None, version_end=None):
-    base_url =f"https://services.nvd.nist.gov/rest/json/cves/2.0?virtualMatchString={cpe_name}"
+    base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?virtualMatchString={cpe_name}"
     if version_start:
-        base_url +=f"&versionStart={version_start}&versionStartType=including"
+        base_url += f"&versionStart={version_start}&versionStartType=including"
     if version_end:
-        base_url +=f"&versionEnd={version_end}&versionEndType=excluding"
+        base_url += f"&versionEnd={version_end}&versionEndType=excluding"
     response = requests.get(base_url)
     response.raise_for_status()
     data = response.json()
-                  
+
     # Extract the CVE IDs and descriptions
-            
+
     vulnerabilities = data['vulnerabilities']
     print_cve_details(vulnerabilities)
     return vulnerabilities
-                  
+
+
 # Prompt the user to select the search option
 def search():
     while True:
         click.echo('Select the option:')
-        click.echo('1. General keyword search')
-        click.echo('2. Search using product name when CPE info is not known')
-        click.echo('3. Search for CVEs of against specific CPE - type, vendor name, product, and version')
         click.echo('4. Search info for a CVE-ID')
         click.echo('5. Search for all CVEs affiliated with versions x.x through x.x of a specific CPE')
         click.echo('6. HELP')
         option = input('Please choose option 1/2/3/4/5/6 or 0 to exit:')
-        
-        if option == '1':
-            keyword = input('Enter the keyword to search: ')
-            print(f"CVEs for '{keyword}':")
-            cves = search_by_keyword(keyword)
-        elif option == '2':
-            keyword = input("Enter the product name to search for: ")
-            cves = search_by_prod(keyword)
-        elif option == '3':
-            click.echo("""NOTE: use 'a' for application | 'o' for operating system | 'h' for hardware | 'p' for others""")
-            cpe_type = input('Enter the CPE type (a/o/h/p): ')
-            while cpe_type not in ['a', 'o', 'h', 'p']:
-                  cpe_type = input('Please enter a valid CPE type (a/o/h/p): ')
-            vendor_name = input('Enter the vendor name: ')
-            while not vendor_name:
-                  vendor_name = input('Please enter a valid vendor name: ')
-            product_name = input('Enter the product name: ')
-            while not product_name:
-                  product_name = input('Please enter a valid product name: ')
-            version = input('Enter the product version: ')
-            while not version:
-                    version = input('Please enter a valid product version: ')
-            cpe_name = f"cpe:2.3:{cpe_type}:{vendor_name}:{product_name}:{version}"
-             # Fetch the CVEs
-            print(f"CVEs for {cpe_name}:")
-            cves = search_by_cpe(cpe_name)
-        elif option == '4':
+
+        if option == '4':
             cve_id = input('Enter the CVE-ID to search: ')
             print(f"CVE details for {cve_id}:")
             cves = search_by_cve_id(cve_id)
         elif option == '5':
-        
+
             click.echo("""Enter CPE details NOTE: use 'a' for application | 'o' for operating system | 'h' for hardware | 'p' for others""")
             cpe_type = input('Enter the CPE type (a/o/h/p): ')
             while cpe_type not in ['a', 'o', 'h', 'p']:
@@ -181,7 +157,7 @@ def search():
             while not product_name:
                   product_name = input('Please enter a valid product name: ')  
             cpe_name = f"cpe:2.3:{cpe_type}:{vendor_name}:{product_name}"
-            
+
             version_start =input('Enter the starting version where start version included (optional): ')
             version_end =input('Enter the ending version where end version excluded (optional):')
             print(f"CVEs for '{cpe_name}' from versions {version_start} through {version_end}:")

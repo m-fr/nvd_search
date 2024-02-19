@@ -1,6 +1,13 @@
 import click
 
+from rich import print
+from rich.tree import Tree
+from rich.prompt import Prompt
+
+from semver import Version
+
 from nvd_search.__version__ import __version__
+from nvd_search.cli.console import Console
 from nvd_search.cli.utils import AliasedGroup, handle_exceptions
 from nvd_search.search import search_by_cpe, search_by_keyword, search_by_cve_id, search_by_prod, search_by_ver
 
@@ -14,10 +21,28 @@ def cli():
 
 @cli.command()
 @handle_exceptions
-@click.argument("cpe_name")
-def cpe(cpe_name: str):
-    """Search by CPE.
+def cpe():
+    """Search for CVEs of against specific CPE - type, vendor name, product, and version.
     """
+    tree = Tree("CPE type hint")
+    tree.add("[bold]a[/] application")
+    tree.add("[bold]o[/] operating system ")
+    tree.add("[bold]h[/] hardware ")
+    tree.add("[bold]p[/] others")
+    Console().print(tree)
+
+    cpe_type = Prompt.ask("Enter the CPE type", choices=['a', 'o', 'h', 'p'], default='a')
+    vendor_name = Prompt.ask("Enter the vendor name")
+    product_name = Prompt.ask("Enter the product name")
+
+    # Ask the user to supply the CPE version
+    while True:
+        version = Prompt.ask("Enter the product version")
+        if Version.is_valid(version):
+            break
+        print("[prompt.invalid]Please enter a valid version.")
+    
+    cpe_name = f"cpe:2.3:{cpe_type}:{vendor_name}:{product_name}:{version}"
     search_by_cpe(cpe_name=cpe_name)
 
 
@@ -25,7 +50,7 @@ def cpe(cpe_name: str):
 @handle_exceptions
 @click.argument("keyword")
 def keyword(keyword: str):
-    """Search by keyword.
+    """General keyword search.
     """
     search_by_keyword(keyword=keyword)
 
@@ -43,7 +68,7 @@ def cve(cve: str):
 @handle_exceptions
 @click.argument("keyword")
 def product(keyword: str):
-    """Search by product keyword.
+    """Search using product name when CPE info is not known.
     """
     search_by_prod(prod=keyword)
 

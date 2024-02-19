@@ -17,18 +17,17 @@ class Risk(str, Enum):
         """
         match self:
             case Risk.none:
-                return "[blue]"
+                return "[logging.level.notset]"
             case Risk.low:
-                return "[green]"
+                return "[logging.level.debug]"
             case Risk.medium:
-                return "[yellow]"
+                return "[logging.level.warning]"
             case Risk.high:
-                return "[orange1]"
+                return "[logging.level.error]"
             case Risk.critical:
-                return "[red]"
+                return "[logging.level.critical]"
             case _:
-                raise SeretoValueError("unexpected risk value")
-
+                raise UtilValueError("unexpected risk value")
 
     def to_int(self):
         """Convert risks to a number.
@@ -47,4 +46,4 @@ class Risk(str, Enum):
             case Risk.critical:
                 return 4
             case _:
-                raise SeretoValueError("unexpected risk value")
+                raise UtilValueError("unexpected risk value")
