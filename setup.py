@@ -22,9 +22,7 @@ but you're trying to install it on Python {CURRENT_PYTHON[0]}.{CURRENT_PYTHON[1]
 requires = [
     "click",
     "requests",
-    "pydantic>=2.6",
     "rich",
-    "semver",
 ]
 
 about: dict[str, str] = {}
@@ -57,7 +55,6 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
-        "Framework :: Pydantic",
         "Framework :: Pytest",
         "Intended Audience :: Information Technology",
         "License :: OSI Approved :: MIT License",
@@ -69,7 +66,6 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: Implementation :: CPython",
         # "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Security",
         "Topic :: Text Processing",

@@ -2,7 +2,6 @@ import click
 
 from nvd_search.__version__ import __version__
 from nvd_search.cli.utils import AliasedGroup, handle_exceptions
-from nvd_search.models.version import CPEVersion
 from nvd_search.search import search_by_cpe, search_by_keyword, search_by_cve_id, search_by_prod, search_by_ver
 
 
@@ -54,7 +53,7 @@ def product(keyword: str):
 @click.argument("cpe")
 @click.option("-s", "--start", help="First product version to be included in search")
 @click.option("-e", "--end", help="First product version to be excluded from search")
-def version(start: CPEVersion | None, end: CPEVersion | None, cpe: str):
+def version(start: str | None, end: str | None, cpe: str):
     """Search by CPE version.
     """
     search_by_ver(cpe_name=cpe, version_start=start, version_end=end)
