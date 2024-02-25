@@ -1,11 +1,10 @@
 from itertools import filterfalse
 
-from nvd_search.exceptions import UtilValueError
 from nvd_search.enums import Risk
 
 
 def primary(metrics):
-    m = list(filterfalse(lambda x: not x['type'] is 'Primary', metrics))
+    m = list(filterfalse(lambda x: x['type'] != 'Primary', metrics))
     if not m:
         return metrics[0]
     else:

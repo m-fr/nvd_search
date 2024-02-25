@@ -41,7 +41,7 @@ def cpe():
         if Version.is_valid(version):
             break
         print("[prompt.invalid]Please enter a valid version.")
-    
+
     cpe_name = f"cpe:2.3:{cpe_type}:{vendor_name}:{product_name}:{version}"
     search_by_cpe(cpe_name=cpe_name)
 
@@ -59,7 +59,7 @@ def keyword(keyword: str):
 @handle_exceptions
 @click.argument("cve")
 def cve(cve: str):
-    """Search by CVE id.
+    """Search info for a CVE-ID.
     """
     search_by_cve_id(cve_id=cve)
 
@@ -75,10 +75,21 @@ def product(keyword: str):
 
 @cli.command()
 @handle_exceptions
-@click.argument("cpe")
-@click.option("-s", "--start", help="First product version to be included in search")
-@click.option("-e", "--end", help="First product version to be excluded from search")
-def version(start: str | None, end: str | None, cpe: str):
-    """Search by CPE version.
+def version():
+    """Search for all CVEs affiliated with versions x.x through y.y of a specific CPE.
     """
-    search_by_ver(cpe_name=cpe, version_start=start, version_end=end)
+    tree = Tree("CPE type hint")
+    tree.add("[bold]a[/] application")
+    tree.add("[bold]o[/] operating system ")
+    tree.add("[bold]h[/] hardware ")
+    tree.add("[bold]p[/] others")
+    Console().print(tree)
+
+    cpe_type = Prompt.ask("Enter the CPE type", choices=['a', 'o', 'h', 'p'], default='a')
+    vendor_name = Prompt.ask("Enter the vendor name")
+    product_name = Prompt.ask("Enter the product name")
+
+    start = Prompt.ask("Enter the lowest version", default=None)
+    end = Prompt.ask("Enter the highest version", default=None)
+
+    search_by_ver(cpe_name=f"cpe:2.3:{cpe_type}:{vendor_name}:{product_name}", version_start=start, version_end=end)

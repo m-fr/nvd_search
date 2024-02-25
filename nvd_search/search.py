@@ -1,5 +1,4 @@
 import requests
-import click
 import re
 
 from rich import box, print
@@ -128,57 +127,6 @@ def search_by_ver(cpe_name, version_start=None, version_end=None):
 
     vulnerabilities = data['vulnerabilities']
     print_cve_details(vulnerabilities)
+    print(f"Total {len(vulnerabilities)} CVEs found for CPE '{escape(cpe_name)}'"
+          + f" version [{version_start or '0'}, {version_end or 'inf'}).")
     return vulnerabilities
-
-
-# Prompt the user to select the search option
-def search():
-    while True:
-        click.echo('Select the option:')
-        click.echo('4. Search info for a CVE-ID')
-        click.echo('5. Search for all CVEs affiliated with versions x.x through x.x of a specific CPE')
-        click.echo('6. HELP')
-        option = input('Please choose option 1/2/3/4/5/6 or 0 to exit:')
-
-        if option == '4':
-            cve_id = input('Enter the CVE-ID to search: ')
-            print(f"CVE details for {cve_id}:")
-            cves = search_by_cve_id(cve_id)
-        elif option == '5':
-
-            click.echo("""Enter CPE details NOTE: use 'a' for application | 'o' for operating system | 'h' for hardware | 'p' for others""")
-            cpe_type = input('Enter the CPE type (a/o/h/p): ')
-            while cpe_type not in ['a', 'o', 'h', 'p']:
-                  cpe_type = input('Please enter a valid CPE type (a/o/h/p): ')
-            vendor_name = input('Enter the vendor name: ')
-            while not vendor_name:
-                  vendor_name = input('Please enter a valid vendor name: ')
-            product_name = input('Enter the product name: ')  
-            while not product_name:
-                  product_name = input('Please enter a valid product name: ')  
-            cpe_name = f"cpe:2.3:{cpe_type}:{vendor_name}:{product_name}"
-
-            version_start =input('Enter the starting version where start version included (optional): ')
-            version_end =input('Enter the ending version where end version excluded (optional):')
-            print(f"CVEs for '{cpe_name}' from versions {version_start} through {version_end}:")
-            cves = search_by_ver(cpe_name, version_start, version_end)
-        elif option == '6':
-            help_descriptions={
-            "1":"Find CVEs matching keyword search",
-            "2":"Search using product name when CPE info is not known",
-            "3":"Search for CVEs against specific CPE",
-            "4":"Get details for a CVE-ID",
-            "5":"Search for CVEs for specific CPE versions",
-            "0":"Program EXIT"
-            }
-            for option, description in help_descriptions.items():
-              click.echo(click.style(f"OPTION {option}:",fg='cyan'))
-              click.echo(click.style(f"{description}",fg='blue'))
-            
-        elif option == '0':
-            # Exit program
-            print("Thank you for using NVD lookup tool....Exiting program...skadoooosh!!!...")
-            break
-        else:
-            print("Invalid option. Please try again.")
-                  
