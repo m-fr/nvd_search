@@ -12,11 +12,11 @@ def primary(metrics):
 
 
 def severity(metrics):
-    risk = None
+    risk = "none"
     if 'cvssMetricV31' in metrics:
         risk = primary(metrics['cvssMetricV31'])['cvssData']['baseSeverity']
-    if 'cvssMetricV30' in metrics:
+    elif 'cvssMetricV30' in metrics:
         risk = primary(metrics['cvssMetricV30'])['cvssData']['baseSeverity']
-    if 'cvssMetricV2' in metrics:
+    elif 'cvssMetricV2' in metrics:
         risk = primary(metrics['cvssMetricV2'])['baseSeverity']
-    return Risk(risk)
+    return Risk(risk.lower())

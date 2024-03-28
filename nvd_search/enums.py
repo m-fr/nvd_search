@@ -6,11 +6,16 @@ from nvd_search.exceptions import UtilValueError
 class Risk(str, Enum):
     """Enum representing the risk level of a finding.
     """
-    critical = "CRITICAL"
-    high = "HIGH"
-    medium = "MEDIUM"
-    low = "LOW"
-    none = "NONE"
+    critical = "critical"
+    high = "high"
+    medium = "medium"
+    low = "low"
+    none = "none"
+
+    def to_string(self):
+        """Convert risks to a string.
+        """
+        return self.value.capitalize()
 
     def to_color(self):
         """Convert risks to a rich color.

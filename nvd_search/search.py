@@ -19,8 +19,9 @@ def print_cve_details(vulnerabilities):
         cve_id = escape(vuln['cve']['id'])
         description = escape(vuln['cve']['descriptions'][0]['value'])
         cve_link = escape(f"https://nvd.nist.gov/vuln/detail/{cve_id}")
-        risk = severity(vuln['cve']['metrics']).to_color()
-        table.add_row(f"{risk}{cve_id}", description.strip(), f"[link={cve_link}]{cve_link}[/]")
+        risk = severity(vuln['cve']['metrics']).to_string()
+        color = severity(vuln['cve']['metrics']).to_color()
+        table.add_row(f"{color}{cve_id}\n({risk})", description.strip(), f"[link={cve_link}]{cve_link}[/]")
 
     Console().print(table, justify="center")
 
