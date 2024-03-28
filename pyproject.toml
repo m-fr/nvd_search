@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nvd_search"
+description = "NVD Search Tool."
+authors = [
+    {name = "Michal Franc", email = "mf@m-fr.cz"}
+]
+license = {text = "MIT License"}
+keywords = []
+version = "0.2.0"
+dynamic = ["readme", "classifiers", "dependencies"]
+
+[project.scripts]
+nvd_search = "nvd_search.cli.cli:cli"
+
+[project.urls]
+Repository = "https://github.com/m-fr/nvd_search"
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown"}
+classifiers = {file = "classifiers.txt"}
+dependencies = {file = "requirements.txt"}
+
+[tool.flake8]
+max-line-length = 119
