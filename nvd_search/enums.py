@@ -1,9 +1,11 @@
 from enum import Enum
+from functools import total_ordering
 
 from nvd_search.exceptions import UtilValueError
 
 
-class Risk(str, Enum):
+@total_ordering
+class Risk(Enum):
     """Enum representing the risk level of a finding.
     """
     critical = "critical"
@@ -12,7 +14,22 @@ class Risk(str, Enum):
     low = "low"
     none = "none"
 
-    def to_string(self):
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.to_int() < other.to_int()
+        return NotImplemented
+
+    @classmethod
+    def _missing_(cls, value):
+        """Make the enum case insesitive.
+        """
+        if not isinstance(value, str):
+            raise ValueError
+        for member in cls:
+            if member.value == value.lower():
+                return member
+
+    def __str__(self):
         """Convert risks to a string.
         """
         return self.value.capitalize()
