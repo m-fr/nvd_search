@@ -65,6 +65,43 @@ def search_by_cve_id(cve_id):
     return vulnerabilities
 
 
+def match_cpe(cpe):
+    input_string = cpe
+    url = f"https://services.nvd.nist.gov/rest/json/cpes/2.0?cpeMatchString={input_string}"
+    response = requests.get(url)
+    response.raise_for_status()
+
+    response_json = response.json()
+    if not ("resultsPerPage" in response_json and "products" in response_json):
+        print("[logging.level.warning]Invalid response from the NVD API")
+        return
+
+    cpe_matches = [product["cpe"]["cpeName"] for product in response_json["products"]]
+
+    if not cpe_matches:
+        print(f"[logging.level.info]'{escape(input_string)}' not found in any CPEs")
+        return
+
+    selected_num = 0
+    if len(cpe_matches) > 1:
+        table = Table("#", "CPE", title="CPEs", box=box.HORIZONTALS)
+        for i, cpe in enumerate(cpe_matches):
+            table.add_row(str(i), escape(cpe))
+        Console().print(table, justify="center")
+
+        # Ask the user to select the CPE
+        while True:
+            selected_num = IntPrompt.ask("Select the serial number tagged to CPE")
+            if selected_num not in range(len(cpe_matches)):
+                print(f"[prompt.invalid]Please enter a number between 0 and {len(unique_cpes)}.")
+                continue
+            if Confirm.ask(f"Selected '{escape(cpe_matches[selected_num])}'?", default=True):
+                break
+
+    vulnerabilities = search_by_cpe(cpe_matches[selected_num])
+    return vulnerabilities
+
+
 def search_by_prod(prod):
     input_string = prod
     url = f"https://services.nvd.nist.gov/rest/json/cpes/2.0?keywordSearch={input_string}"
@@ -72,46 +109,48 @@ def search_by_prod(prod):
     response.raise_for_status()
 
     response_json = response.json()
-    if "resultsPerPage" in response_json and "products" in response_json:
-        # Look for all occurrences of the input string in the response
-        cpe_matches = []
-        for product in response_json["products"]:
-            cpe_match = re.search(r'cpe:2\.3:.*?:.*?:'+input_string, product["cpe"]["cpeName"])
-            if cpe_match:
-                cpe_matches.append(cpe_match.group(0))
-
-        if cpe_matches:
-            # Print all unique matching CPEs with numbered responses
-            table = Table("#", "CPE", title="CPEs", box=box.HORIZONTALS)
-            unique_cpes = list(set(cpe_matches))
-            for i, cpe in enumerate(unique_cpes):
-                table.add_row(str(i), escape(cpe))
-            Console().print(table, justify="center")
-
-            # Ask the user to select the CPE
-            while True:
-                selected_num = IntPrompt.ask("Select the serial number tagged to CPE")
-                if selected_num not in range(len(unique_cpes)):
-                    print(f"[prompt.invalid]Please enter a number between 0 and {len(unique_cpes)}.")
-                    continue
-                if Confirm.ask(f"Selected '{escape(unique_cpes[selected_num])}'?", default=True):
-                    break
-            selected_cpe = unique_cpes[selected_num]
-
-            # Ask the user to supply the CPE version
-            while True:
-                version = Prompt.ask("Enter the product version")
-                if Version.is_valid(version):
-                    break
-                print("[prompt.invalid]Please enter a valid version.")
-            cpe_s = f"{selected_cpe}:{version}"
-
-            vulnerabilities = search_by_cpe(cpe_s)
-            print(f"Total {len(vulnerabilities)} CVEs found for CPE '{escape(cpe_s)}'.")
-        else:
-            print(f"[logging.level.info]'{escape(input_string)}' not found in any CPEs")
-    else:
+    if not ("resultsPerPage" in response_json and "products" in response_json):
         print("[logging.level.warning]Invalid response from the NVD API")
+        return
+
+    # Look for all occurrences of the input string in the response
+    cpe_matches = []
+    for product in response_json["products"]:
+        cpe_match = re.search(r'cpe:2\.3:.*?:.*?:'+input_string, product["cpe"]["cpeName"])
+        if cpe_match:
+            cpe_matches.append(cpe_match.group(0))
+
+    if not cpe_matches:
+        print(f"[logging.level.info]'{escape(input_string)}' not found in any CPEs")
+        return
+
+    # Print all unique matching CPEs with numbered responses
+    table = Table("#", "CPE", title="CPEs", box=box.HORIZONTALS)
+    unique_cpes = list(set(cpe_matches))
+    for i, cpe in enumerate(unique_cpes):
+        table.add_row(str(i), escape(cpe))
+    Console().print(table, justify="center")
+
+    # Ask the user to select the CPE
+    while True:
+        selected_num = IntPrompt.ask("Select the serial number tagged to CPE")
+        if selected_num not in range(len(unique_cpes)):
+            print(f"[prompt.invalid]Please enter a number between 0 and {len(unique_cpes)}.")
+            continue
+        if Confirm.ask(f"Selected '{escape(unique_cpes[selected_num])}'?", default=True):
+            break
+    selected_cpe = unique_cpes[selected_num]
+
+    # Ask the user to supply the CPE version
+    while True:
+        version = Prompt.ask("Enter the product version")
+        if Version.is_valid(version):
+            break
+        print("[prompt.invalid]Please enter a valid version.")
+    cpe_s = f"{selected_cpe}:{version}"
+
+    vulnerabilities = match_cpe(cpe_s)
+    return vulnerabilities
 
 
 def search_by_ver(cpe_name, version_start=None, version_end=None):
