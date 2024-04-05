@@ -93,7 +93,7 @@ def match_cpe(cpe):
         while True:
             selected_num = IntPrompt.ask("Select the serial number tagged to CPE")
             if selected_num not in range(len(cpe_matches)):
-                print(f"[prompt.invalid]Please enter a number between 0 and {len(unique_cpes)}.")
+                print(f"[prompt.invalid]Please enter a number between 0 and {len(cpe_matches)}.")
                 continue
             if Confirm.ask(f"Selected '{escape(cpe_matches[selected_num])}'?", default=True):
                 break
