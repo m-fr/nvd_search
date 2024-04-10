@@ -4,7 +4,6 @@ import sys
 from typing import Callable, ParamSpec, TypeVar
 
 import click
-import pydantic
 
 from nvd_search.cli.aliases import cli_aliases
 from nvd_search.cli.console import Console

@@ -1,19 +1,17 @@
 import click
+import importlib.metadata
 
 from rich import print
 from rich.tree import Tree
 from rich.prompt import Prompt
 
-from semver import Version
-
-from nvd_search.__version__ import __version__
 from nvd_search.cli.console import Console
 from nvd_search.cli.utils import AliasedGroup, handle_exceptions
 from nvd_search.search import search_by_cpe, search_by_keyword, search_by_cve_id, search_by_prod, search_by_ver
 
 
 @click.group(cls=AliasedGroup, context_settings={'help_option_names': ['-h', '--help']})
-@click.version_option(version=__version__)
+@click.version_option(version=importlib.metadata.version("nvd_search"))
 def cli():
     """NVD Search Tool.
     """
