@@ -83,7 +83,7 @@ def match_cpe(cpe):
         return
 
     selected_num = 0
-    if len(cpe_matches) > 1:
+    if len(cpe_matches) < 0:
         table = Table("#", "CPE", title="CPEs", box=box.HORIZONTALS)
         for i, cpe in enumerate(cpe_matches):
             table.add_row(str(i), escape(cpe))
@@ -100,6 +100,25 @@ def match_cpe(cpe):
 
     vulnerabilities = search_by_cpe(cpe_matches[selected_num])
     return vulnerabilities
+
+
+def search_cpe_by_keyword(keyword):
+    url = f"https://services.nvd.nist.gov/rest/json/cpes/2.0?cpeMatchString={keyword}"
+    response = requests.get(url)
+    response.raise_for_status()
+
+    response_json = response.json()
+    if not ("resultsPerPage" in response_json and "products" in response_json):
+        print("[logging.level.warning]Invalid response from the NVD API")
+        return []
+
+    cpe_matches = [product["cpe"]["cpeName"] for product in response_json["products"]]
+
+    if not cpe_matches:
+        print(f"[logging.level.info]'{escape(keyword)}' not found in any CPEs")
+        return []
+
+    return cpe_matches
 
 
 def search_by_prod(prod):

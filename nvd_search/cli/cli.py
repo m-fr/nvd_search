@@ -6,6 +6,7 @@ from rich.tree import Tree
 from rich.prompt import Prompt
 
 from nvd_search.cli.console import Console
+from nvd_search.tui.tui import Tui
 from nvd_search.cli.utils import AliasedGroup, handle_exceptions
 from nvd_search.search import search_by_cpe, search_by_keyword, search_by_cve_id, search_by_prod, search_by_ver
 
@@ -15,6 +16,14 @@ from nvd_search.search import search_by_cpe, search_by_keyword, search_by_cve_id
 def cli():
     """NVD Search Tool.
     """
+
+
+@cli.command()
+@handle_exceptions
+def tui():
+    """Run interactively with Textual TUI.
+    """
+    Tui().run()
 
 
 @cli.command()
